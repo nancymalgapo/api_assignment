@@ -38,5 +38,4 @@ at the index page.
 | 200         | success                                   |
 | 400         | bad request, please check your request    |
 | 404         | not found                                 |
-| 424         | external dependency failed                |
 | 500         | internal server error, application failed |
