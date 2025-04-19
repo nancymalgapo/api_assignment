@@ -44,13 +44,15 @@ def test_get_exchange_rate_by_date():
     }
 
 
-def test_get_historical_data_success():
+def test_get_historical_data():
     response = client.get("/historical-data?currency=PLN&start_date=2025-04-16&end_date=2025-04-15")
     assert response.status_code == 200
     assert response.json() == {
         "message": "success",
         "results": {
-            "2025-04-16": 4.2933,
-            "2025-04-15": 4.2844
+            "result": {
+                "2025-04-16": 4.2933,
+                "2025-04-15": 4.2844
+            }
         }
     }

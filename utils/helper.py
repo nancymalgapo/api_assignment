@@ -6,11 +6,11 @@ import zipfile
 from datetime import datetime
 
 
-def format_date(str_date):
+def format_date(str_date: str):
     return datetime.strptime(str_date, '%Y-%m-%d')
 
 
-def clean_data(df):
+def clean_data(df: pd.DataFrame):
     df = df.fillna("")
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     return df
