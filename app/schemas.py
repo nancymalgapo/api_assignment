@@ -1,11 +1,15 @@
 from datetime import date
-from typing import Any, Dict
+from typing import Any, Dict, List
 from pydantic import BaseModel
 
 
-class Output(BaseModel):
+class OutputModel(BaseModel):
     message: str | None = None
     results: Any | None = None
+
+
+class CurrencyListModel(BaseModel):
+    currencies: List
 
 
 class ConvertionRatesModel(BaseModel):

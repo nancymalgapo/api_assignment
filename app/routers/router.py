@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from app.schemas import Output, ConvertionRatesModel, ExchangeRateByDateModel, HistoricalDataModel
+from app.schemas import (OutputModel, CurrencyListModel, ConvertionRatesModel, ExchangeRateByDateModel,
+                         HistoricalDataModel)
 from utils.helper import load_data, format_date
 
 df = load_data()
@@ -8,19 +9,19 @@ router = APIRouter(
     tags=["exchange_rates"]
     )
 
-@router.get("/currencies", response_model=Output)
+@router.get("/currencies", response_model=OutputModel)
 async def get_currencies():
     """
     Get a list of all supported currencies
     """
     currency_list = df.columns.to_list()
-    result = {
-        "currencies" : currency_list
-    }
-    return Output(message="success", results=result)
+    result = CurrencyListModel(
+        currencies=currency_list
+    )
+    return OutputModel(message="success", results=result)
 
 
-@router.get("/conversion-rates", response_model=Output)
+@router.get("/conversion-rates", response_model=OutputModel)
 async def get_conversion_rates(date: str):
     """
     Get the conversion rate of all currencies against Euro from a given date
@@ -30,12 +31,12 @@ async def get_conversion_rates(date: str):
             date=format_date(date),
             conversion_rates=df.loc[date].to_dict()
         )
-        return Output(message="success", results=output)
+        return OutputModel(message="success", results=output)
     else:
         raise HTTPException(status_code=404, detail="Date not found")
 
 
-@router.get("/exchange-rate-by-date", response_model=Output)
+@router.get("/exchange-rate-by-date", response_model=OutputModel)
 async def get_exchange_rate_by_date(currency: str, date: str):
     """
     Get the exchange rate of a given pair of date and currency
@@ -47,10 +48,10 @@ async def get_exchange_rate_by_date(currency: str, date: str):
         exchange_rate=value
     )
 
-    return Output(message="success", results=result)
+    return OutputModel(message="success", results=result)
 
 
-@router.get("/historical-data", response_model=Output)
+@router.get("/historical-data", response_model=OutputModel)
 async def get_historical_data(currency: str, start_date: str, end_date: str):
     """
     Get the exchange rates of a currency from a requested date range
@@ -62,4 +63,4 @@ async def get_historical_data(currency: str, start_date: str, end_date: str):
         result={_date: float(value) for _date, value in zip(date_range.index, date_range.values)}
     )
 
-    return Output(message="success", results=result)
+    return OutputModel(message="success", results=result)
