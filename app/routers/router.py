@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException
+import datetime
+
+from fastapi import APIRouter, status
+
 from app.schemas import (OutputModel, CurrencyListModel, ConvertionRatesModel, ExchangeRateByDateModel,
                          HistoricalDataModel)
-from utils.helper import load_data, format_date
+from app.errors import NotFoundException, BadRequestException
+from utils.helper import load_data, validate_currency, validate_date, format_date
 
 df = load_data()
 
@@ -9,7 +13,7 @@ router = APIRouter(
     tags=["exchange_rates"]
     )
 
-@router.get("/currencies", response_model=OutputModel)
+@router.get("/currencies", response_model=OutputModel, status_code=status.HTTP_200_OK)
 async def get_currencies():
     """
     Get a list of all supported currencies
@@ -21,46 +25,64 @@ async def get_currencies():
     return OutputModel(message="success", results=result)
 
 
-@router.get("/conversion-rates", response_model=OutputModel)
+@router.get("/conversion-rates", response_model=OutputModel, status_code=status.HTTP_200_OK)
 async def get_conversion_rates(date: str):
     """
     Get the conversion rate of all currencies against Euro from a given date
     """
-    if date in df.index:
-        output = ConvertionRatesModel(
-            date=format_date(date),
-            conversion_rates=df.loc[date].to_dict()
-        )
-        return OutputModel(message="success", results=output)
+    is_valid, msg = validate_date(date)
+    if not is_valid:
+        raise BadRequestException(detail=msg)
     else:
-        raise HTTPException(status_code=404, detail="Date not found")
+        if date in df.index:
+            output = ConvertionRatesModel(
+                date=format_date(date),
+                conversion_rates=df.loc[date].to_dict()
+            )
+            return OutputModel(message="success", results=output)
+        else:
+            raise NotFoundException(detail="Date not found")
 
 
-@router.get("/exchange-rate-by-date", response_model=OutputModel)
+@router.get("/exchange-rate-by-date", response_model=OutputModel, status_code=status.HTTP_200_OK)
 async def get_exchange_rate_by_date(currency: str, date: str):
     """
     Get the exchange rate of a given pair of date and currency
     """
-    value = df.loc[date, currency]
-    result = ExchangeRateByDateModel(
-        date=format_date(date),
-        currency=currency,
-        exchange_rate=value
-    )
+    currency = currency.upper()
+    is_valid_currency, _ = validate_currency(currency)
+    is_valid_date, _ = validate_date(date)
+    if not is_valid_date or not is_valid_currency:
+        raise BadRequestException(detail="Given currency or date is invalid")
+    else:
+        value = df.loc[date, currency]
+        result = ExchangeRateByDateModel(
+            date=format_date(date),
+            currency=currency,
+            exchange_rate=value
+        )
 
-    return OutputModel(message="success", results=result)
+        return OutputModel(message="success", results=result)
 
 
-@router.get("/historical-data", response_model=OutputModel)
-async def get_historical_data(currency: str, start_date: str, end_date: str):
+@router.get("/historical-data", response_model=OutputModel, status_code=status.HTTP_200_OK)
+async def get_historical_data(currency: str, high_date: str, low_date: str):
     """
     Get the exchange rates of a currency from a requested date range
     """
-    if currency not in df.columns:
-        raise HTTPException(status_code=404, detail="Currency not found")
-    date_range = df.loc[start_date:end_date, currency]
-    result = HistoricalDataModel(
-        result={_date: float(value) for _date, value in zip(date_range.index, date_range.values)}
-    )
+    currency = currency.upper()
 
-    return OutputModel(message="success", results=result)
+    if currency not in df.columns:
+        raise NotFoundException(detail="Currency not found")
+
+    if format_date(high_date) > format_date(low_date):
+        _range = df.loc[high_date:low_date, currency]
+        if not _range.empty:
+            result = HistoricalDataModel(
+                result={_date: float(value) for _date, value in zip(_range.index, _range.values)}
+            )
+            return OutputModel(message="success", results=result)
+        else:
+            raise NotFoundException(detail="No exchange rates found for the given range")
+    else:
+        raise BadRequestException(detail="The high date cannot be less than or equal to the low date.")
