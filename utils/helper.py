@@ -1,6 +1,6 @@
+import httpx
 import io
 import pandas as pd
-import requests
 import zipfile
 
 from datetime import datetime
@@ -39,9 +39,12 @@ def clean_data(df: pd.DataFrame):
     return df
 
 
-def load_data():
+async def load_data():
     url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip"
-    response = requests.get(url)
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        response.raise_for_status()
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
         csv_filename = z.namelist()[0]
