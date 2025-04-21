@@ -11,25 +11,6 @@ def format_date(str_date: str) -> datetime:
     return datetime.strptime(str_date, '%Y-%m-%d')
 
 
-def validate_currency(currency: str) -> Tuple[bool, str]:
-    """
-    Validates the input currency string.
-
-    1. Checks if the length of the currency string is exactly 3.
-    2. Checks if the currency is not equal to 'EUR'.
-
-    Returns:
-        Tuple[bool, str]: A tuple containing a boolean indicating validity and a message.
-    """
-    if len(currency) != 3:
-        return False, "Currency code must be exactly 3 characters long"
-
-    if currency == "EUR":
-        return False, "Currency cannot be EUR"
-
-    return True, "Success"
-
-
 def validate_date(str_date: str) -> Tuple[bool, str]:
     """
     Validates the input date string.

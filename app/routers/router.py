@@ -1,16 +1,17 @@
-import datetime
+from sys import prefix
 
 from fastapi import APIRouter, status
 
 from app.schemas import (OutputModel, CurrencyListModel, ConvertionRatesModel, ExchangeRateByDateModel,
                          HistoricalDataModel)
-from app.errors import NotFoundException, BadRequestException
-from utils.helper import load_data, validate_currency, validate_date, format_date
+from app.errors import NotFoundException, BadRequestException, InternalServerErrorException
+from utils.helper import load_data, validate_date, format_date
 
 df = load_data()
 
 router = APIRouter(
-    tags=["exchange_rates"]
+    tags=["exchange_rates"],
+    prefix="/api"
     )
 
 @router.get("/currencies", response_model=OutputModel, status_code=status.HTTP_200_OK)
@@ -18,11 +19,14 @@ async def get_currencies():
     """
     Get a list of all supported currencies
     """
-    currency_list = df.columns.to_list()
-    result = CurrencyListModel(
-        currencies=currency_list
-    )
-    return OutputModel(message="success", results=result)
+    try:
+        currency_list = df.columns.to_list()
+        result = CurrencyListModel(
+            currencies=currency_list
+        )
+        return OutputModel(message="success", results=result)
+    except Exception as e:
+        raise InternalServerErrorException(detail=str(e))
 
 
 @router.get("/conversion-rates", response_model=OutputModel, status_code=status.HTTP_200_OK)
@@ -50,9 +54,8 @@ async def get_exchange_rate_by_date(currency: str, date: str):
     Get the exchange rate of a given pair of date and currency
     """
     currency = currency.upper()
-    is_valid_currency, _ = validate_currency(currency)
     is_valid_date, _ = validate_date(date)
-    if not is_valid_date or not is_valid_currency:
+    if not is_valid_date or currency not in df.columns:
         raise BadRequestException(detail="Given currency or date is invalid")
     else:
         value = df.loc[date, currency]

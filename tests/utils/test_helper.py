@@ -14,17 +14,6 @@ def test_format_date():
         format_date(date_str)
 
 
-def test_validate_currency():
-    # Test with a valid currency
-    assert validate_currency("USD") == (True, "Success")
-
-    # Test with EUR currency
-    assert validate_currency("EUR") == (False, "Currency cannot be EUR")
-
-    # Test with an invalid currency length
-    assert validate_currency("$USD") == (False, "Currency code must be exactly 3 characters long")
-
-
 def test_validate_date():
     # Test with today's date
     today_date_str = datetime.now().strftime('%Y-%m-%d')  # Today's date
