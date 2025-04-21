@@ -1,5 +1,9 @@
 # Pycharm
 .idea/*
 
+# Python cache
+.pytest_cache
+__pycache__
+
 # Environments
 .venv
