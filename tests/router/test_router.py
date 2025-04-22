@@ -15,6 +15,7 @@ def test_get_currencies():
     assert data["message"] == "success"
     assert "results" in data
     assert "currencies" in data["results"]
+    assert isinstance(data["results"]["currencies"], list)
 
     # Check if the currencies list matches the DataFrame columns
     df = pd.DataFrame(columns=["USD","JPY","BGN","CYP","CZK","DKK","EEK","GBP","HUF","LTL","LVL","MTL",
@@ -26,6 +27,15 @@ def test_get_currencies():
 
 
 def test_get_conversion_rates():
+    # Valid
+    response = client.get("/api/conversion-rates?date=2025-04-16")
+    data = response.json()
+    assert response.status_code == 200
+    assert data["message"] == "success"
+    assert data["results"]["conversion_rates"]["USD"] == 1.1355
+
+
+    # Not found
     response = client.get("/api/conversion-rates?date=2023-04-16")
     assert response.status_code == 404
     assert response.json() == {"detail": "Date not found"}
@@ -33,8 +43,10 @@ def test_get_conversion_rates():
 
 def test_get_exchange_rate_by_date():
     response = client.get("/api/exchange-rate-by-date?currency=PLN&date=2025-04-16")
+    data = response.json()
     assert response.status_code == 200
-    assert response.json() == {
+    assert isinstance(data["results"]["exchange_rate"], (float, int))
+    assert data == {
         "message": "success",
         "results": {
             "date": "2025-04-16",
@@ -46,8 +58,10 @@ def test_get_exchange_rate_by_date():
 
 def test_get_historical_data():
     response = client.get("/api/historical-data?currency=PLN&high_date=2025-04-16&low_date=2025-04-15")
+    data = response.json()
     assert response.status_code == 200
-    assert response.json() == {
+    assert isinstance(data["results"], dict)
+    assert data == {
         "message": "success",
         "results": {
             "result": {
