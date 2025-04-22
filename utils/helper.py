@@ -24,7 +24,7 @@ def validate_date(str_date: str) -> Tuple[bool, str]:
     try:
         input_date = format_date(str_date)
     except ValueError:
-        return False, "Invalid date format"
+        return False, "Invalid date input or format"
 
     today = datetime.now()
     if input_date > today:

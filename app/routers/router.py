@@ -58,20 +58,23 @@ async def get_exchange_rate_by_date(currency: str, date: str):
     """
     Get the exchange rate of a given pair of date and currency
     """
-    df = await get_data()
-    currency = currency.upper()
-    is_valid_date, _ = validate_date(date)
-    if not is_valid_date or currency not in df.columns:
-        raise BadRequestException(detail="Given currency or date is invalid")
-    else:
-        value = df.loc[date, currency]
-        result = ExchangeRateByDateModel(
-            date=format_date(date),
-            currency=currency,
-            exchange_rate=value
-        )
+    try:
+        df = await get_data()
+        currency = currency.upper()
+        is_valid_date, msg = validate_date(date)
+        if not is_valid_date or currency not in df.columns:
+            raise BadRequestException(detail=f"Given currency is unsupported or {msg}")
+        else:
+            value = df.loc[date, currency]
+            result = ExchangeRateByDateModel(
+                date=format_date(date),
+                currency=currency,
+                exchange_rate=value
+            )
 
-        return OutputModel(message="success", results=result)
+            return OutputModel(message="success", results=result)
+    except KeyError:
+        raise InternalServerErrorException(detail="Date not yet available")
 
 
 @router.get("/historical-data", response_model=OutputModel, status_code=status.HTTP_200_OK)
