@@ -8,7 +8,7 @@ client = TestClient(app)
 
 
 def test_get_currencies():
-    response = client.get("/currencies")
+    response = client.get("/api/currencies")
     assert response.status_code == 200
 
     data = response.json()
@@ -26,13 +26,13 @@ def test_get_currencies():
 
 
 def test_get_conversion_rates():
-    response = client.get("/conversion-rates?date=2023-04-16")
+    response = client.get("/api/conversion-rates?date=2023-04-16")
     assert response.status_code == 404
     assert response.json() == {"detail": "Date not found"}
 
 
 def test_get_exchange_rate_by_date():
-    response = client.get("/exchange-rate-by-date?currency=PLN&date=2025-04-16")
+    response = client.get("/api/exchange-rate-by-date?currency=PLN&date=2025-04-16")
     assert response.status_code == 200
     assert response.json() == {
         "message": "success",
@@ -45,7 +45,7 @@ def test_get_exchange_rate_by_date():
 
 
 def test_get_historical_data():
-    response = client.get("/historical-data?currency=PLN&start_date=2025-04-16&end_date=2025-04-15")
+    response = client.get("/api/historical-data?currency=PLN&high_date=2025-04-16&low_date=2025-04-15")
     assert response.status_code == 200
     assert response.json() == {
         "message": "success",

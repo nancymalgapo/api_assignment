@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 
 from datetime import datetime, timedelta
-from utils.helper import format_date, validate_currency, validate_date, clean_data
+from utils.helper import format_date, validate_date, clean_data
 
 def test_format_date():
     date_str = "2023-01-01"
@@ -21,7 +21,7 @@ def test_validate_date():
 
     # Test with a date not compliant to YYYY-MM-DD format
     date_str = "01/01/2023"
-    assert validate_date(date_str) == (False, "Invalid date format")
+    assert validate_date(date_str) == (False, "Invalid date input or format")
 
     # Test with a future date
     future_date_str = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')  # Tomorrow's date
@@ -29,10 +29,11 @@ def test_validate_date():
 
     # Test with an empty string
     date_str = ""
-    assert validate_date(date_str) == (False, "Invalid date format")
+    assert validate_date(date_str) == (False, "Invalid date input or format")
 
 
 def test_clean_data():
+    # Sample data has Unnamed columns which are expected to be dropped """
     data = {
         "Unnamed: 0": [1, 2, 3],
         "Value Column": [None, 4.32, 62.5],
