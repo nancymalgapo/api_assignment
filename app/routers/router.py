@@ -61,9 +61,9 @@ async def get_exchange_rate_by_date(currency: str, date: str):
     try:
         df = await get_data()
         currency = currency.upper()
-        is_valid_date, msg = validate_date(date)
+        is_valid_date, _ = validate_date(date)
         if not is_valid_date or currency not in df.columns:
-            raise BadRequestException(detail=f"Given currency is unsupported or {msg}")
+            raise BadRequestException(detail=f"Given currency/date is invalid")
         else:
             value = df.loc[date, currency]
             result = ExchangeRateByDateModel(
