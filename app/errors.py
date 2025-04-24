@@ -18,19 +18,19 @@ class BaseAppException(HTTPException):
         super().__init__(status_code=self.http_status_code, detail=self.details)
 
 
-class BadRequest(BaseAppException):
+class BadRequestException(BaseAppException):
     http_status_code = status.HTTP_400_BAD_REQUEST
     error_type = ErrorTypes.BAD_REQUEST
     details = "Bad request"
 
 
-class NotFound(BaseAppException):
+class NotFoundException(BaseAppException):
     http_status_code = status.HTTP_404_NOT_FOUND
     error_type = ErrorTypes.NOT_FOUND
     details = "Not Found"
 
 
-class InternalServerError(BaseAppException):
+class InternalServerErrorException(BaseAppException):
     http_status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     error_type = ErrorTypes.INTERNAL_SERVER_ERROR
     details = "Internal Server Error"
