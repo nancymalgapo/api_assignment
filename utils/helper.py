@@ -6,6 +6,8 @@ import zipfile
 from datetime import datetime
 from typing import Tuple
 
+from app.constants import URL
+
 
 def format_date(str_date: str) -> datetime:
     return datetime.strptime(str_date, '%Y-%m-%d')
@@ -40,10 +42,8 @@ def clean_data(df: pd.DataFrame):
 
 
 async def load_data():
-    url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip"
-
     async with httpx.AsyncClient() as client:
-        response = await client.get(url)
+        response = await client.get(URL)
         response.raise_for_status()
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:

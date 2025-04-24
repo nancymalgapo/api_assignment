@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from utils.helper import format_date, validate_date, clean_data
 
+
 def test_format_date():
     date_str = "2023-01-01"
     expected_date = datetime(2023, 1, 1)
