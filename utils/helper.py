@@ -13,15 +13,30 @@ def format_date(str_date: str) -> datetime:
     return datetime.strptime(str_date, '%Y-%m-%d')
 
 
+def validate_currency(currency: str) -> Tuple[bool, str]:
+    """
+        Validates the input currency string.
+
+        1. Checks if the currency has length of only 3.
+        2. Checks if the currency is not equal to EUR.
+
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating validity and a message.
+    """
+    if len(currency) == 3 and currency != "EUR":
+        return True, "Success"
+    else:
+        return False, "Invalid currency input or format"
+
 def validate_date(str_date: str) -> Tuple[bool, str]:
     """
-    Validates the input date string.
+        Validates the input date string.
 
-    1. Checks if the date is in the future.
-    2. Checks if the date format is YYYY-MM-DD.
+        1. Checks if the date is in the future.
+        2. Checks if the date format is YYYY-MM-DD.
 
-    Returns:
-        Tuple[bool, str]: A tuple containing a boolean indicating validity and a message.
+        Returns:
+            Tuple[bool, str]: A tuple containing a boolean indicating validity and a message.
     """
     try:
         input_date = format_date(str_date)

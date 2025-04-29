@@ -3,7 +3,7 @@ from app.schemas import (OutputModel, CurrencyListModel, ConvertionRatesModel, E
                          HistoricalDataModel)
 from app.errors import NotFoundException, BadRequestException, InternalServerErrorException
 from app.services.data_cache import DataCache
-from utils.helper import validate_date, format_date
+from utils.helper import validate_currency, validate_date, format_date
 
 data_cache = DataCache()
 router = APIRouter(
@@ -55,9 +55,12 @@ async def get_exchange_rate_by_date(currency: str, date: str):
     try:
         df = await data_cache.get_data()
         currency = currency.upper()
+        is_valid_currency, _ = validate_currency(currency)
         is_valid_date, _ = validate_date(date)
-        if not is_valid_date or currency not in df.columns:
+        if not is_valid_date or not is_valid_currency:
             raise BadRequestException(detail=f"Given currency/date is invalid")
+        elif currency not in df.columns:
+            raise BadRequestException(detail=f"Given currency is unsupported")
         else:
             value = df.loc[date, currency]
             result = ExchangeRateByDateModel(
@@ -78,9 +81,10 @@ async def get_historical_data(currency: str, high_date: str, low_date: str):
     """
     df = await data_cache.get_data()
     currency = currency.upper()
+    is_valid_currency, msg = validate_currency(currency)
 
-    if currency not in df.columns:
-        raise NotFoundException(detail="Currency not found")
+    if not is_valid_currency or currency not in df.columns:
+        raise NotFoundException(detail=f"Currency not found or {msg}")
 
     if format_date(high_date) > format_date(low_date):
         _range = df.loc[high_date:low_date, currency]
