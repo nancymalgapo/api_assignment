@@ -17,6 +17,7 @@ csv_data = '''Date,USD,JPY,BGN,CYP,CZK,DKK,EEK,GBP,HUF,LTL,LVL,MTL,PLN,ROL,RON,S
 2025-04-17,1.136,161.98,1.9558,N/A,25.009,7.4672,N/A,0.85873,407.6,N/A,N/A,N/A,4.2743,N/A,4.9776,11.0278,N/A,N/A,0.9291,145.1,11.9655,N/A,N/A,N/A,43.2604,1.7845,6.681,1.5773,8.29,8.8195,19162.33,4.1852,97.0185,1609.12,22.6247,5.0069,1.9118,64.387,1.4905,37.8,21.3927
 '''
 mock_data = pd.read_csv(StringIO(csv_data), index_col=0)
+mock_data.index = pd.to_datetime(mock_data.index)
 
 
 @patch('app.services.data_cache.DataCache.get_data', return_value=mock_data)
@@ -40,22 +41,21 @@ def test_get_currencies(mock_load_data):
 @patch('app.services.data_cache.DataCache.get_data', return_value=mock_data)
 def test_get_conversion_rates(mock_load_data):
     # Valid
-    response = client.get("/api/conversion-rates?date=2025-04-17")
+    response = client.get("/api/conversion-rates?input_date=2025-04-17")
     data = response.json()
     assert response.status_code == 200
     assert data["message"] == "success"
     assert data["results"]["conversion_rates"]["USD"] == 1.136
 
-
     # Not found
-    response = client.get("/api/conversion-rates?date=2023-04-16")
+    response = client.get("/api/conversion-rates?input_date=2023-04-16")
     assert response.status_code == 404
     assert response.json() == {"detail": "Date not found"}
 
 
 @patch('app.services.data_cache.DataCache.get_data', return_value=mock_data)
 def test_get_exchange_rate_by_date(mock_load_data):
-    response = client.get("/api/exchange-rate-by-date?currency=PLN&date=2025-04-17")
+    response = client.get("/api/exchange-rate-by-date?currency=PLN&input_date=2025-04-17")
     data = response.json()
     assert response.status_code == 200
     assert isinstance(data["results"]["exchange_rate"], (float, int))

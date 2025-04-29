@@ -1,9 +1,10 @@
+from datetime import date
 from fastapi import APIRouter, status
 from app.schemas import (OutputModel, CurrencyListModel, ConvertionRatesModel, ExchangeRateByDateModel,
                          HistoricalDataModel)
 from app.errors import NotFoundException, BadRequestException, InternalServerErrorException
 from app.services.data_cache import DataCache
-from utils.helper import validate_currency, validate_date, format_date
+from utils.helper import validate_currency, validate_date, to_string_date
 
 data_cache = DataCache()
 router = APIRouter(
@@ -28,19 +29,20 @@ async def get_currencies():
 
 
 @router.get("/conversion-rates", response_model=OutputModel, status_code=status.HTTP_200_OK)
-async def get_conversion_rates(date: str):
+async def get_conversion_rates(input_date: date):
     """
     Get the conversion rate of all currencies against Euro from a given date
     """
-    is_valid, msg = validate_date(date)
+    is_valid, msg = validate_date(input_date)
     if not is_valid:
         raise BadRequestException(detail=msg)
     else:
         df = await data_cache.get_data()
-        if date in df.index:
+        str_date = to_string_date(input_date)
+        if str_date in df.index:
             output = ConvertionRatesModel(
-                date=format_date(date),
-                conversion_rates=df.loc[date].to_dict()
+                date=input_date,
+                conversion_rates=df.loc[str_date].to_dict()
             )
             return OutputModel(message="success", results=output)
         else:
@@ -48,7 +50,7 @@ async def get_conversion_rates(date: str):
 
 
 @router.get("/exchange-rate-by-date", response_model=OutputModel, status_code=status.HTTP_200_OK)
-async def get_exchange_rate_by_date(currency: str, date: str):
+async def get_exchange_rate_by_date(currency: str, input_date: date):
     """
     Get the exchange rate of a given pair of date and currency
     """
@@ -56,15 +58,15 @@ async def get_exchange_rate_by_date(currency: str, date: str):
         df = await data_cache.get_data()
         currency = currency.upper()
         is_valid_currency, _ = validate_currency(currency)
-        is_valid_date, _ = validate_date(date)
+        is_valid_date, _ = validate_date(input_date)
         if not is_valid_date or not is_valid_currency:
             raise BadRequestException(detail=f"Given currency/date is invalid")
         elif currency not in df.columns:
             raise BadRequestException(detail=f"Given currency is unsupported")
         else:
-            value = df.loc[date, currency]
+            value = df.loc[input_date.strftime('%Y-%m-%d'), currency]
             result = ExchangeRateByDateModel(
-                date=format_date(date),
+                date=input_date,
                 currency=currency,
                 exchange_rate=value
             )
@@ -75,7 +77,7 @@ async def get_exchange_rate_by_date(currency: str, date: str):
 
 
 @router.get("/historical-data", response_model=OutputModel, status_code=status.HTTP_200_OK)
-async def get_historical_data(currency: str, high_date: str, low_date: str):
+async def get_historical_data(currency: str, high_date: date, low_date: date):
     """
     Get the exchange rates of a currency from a requested date range
     """
@@ -86,11 +88,12 @@ async def get_historical_data(currency: str, high_date: str, low_date: str):
     if not is_valid_currency or currency not in df.columns:
         raise NotFoundException(detail=f"Currency not found or {msg}")
 
-    if format_date(high_date) > format_date(low_date):
-        _range = df.loc[high_date:low_date, currency]
+    if high_date > low_date:
+        _range = df.sort_index().loc[to_string_date(low_date):to_string_date(high_date), currency]
         if not _range.empty:
             result = HistoricalDataModel(
-                result={_date: float(value) for _date, value in zip(_range.index, _range.values)}
+                result={_date.strftime('%Y-%m-%d'): float(value)
+                        for _date, value in zip(_range.index, _range.values)}
             )
             return OutputModel(message="success", results=result)
         else:

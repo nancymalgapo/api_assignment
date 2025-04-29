@@ -3,14 +3,14 @@ import io
 import pandas as pd
 import zipfile
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import Tuple
 
 from app.constants import URL
 
 
-def format_date(str_date: str) -> datetime:
-    return datetime.strptime(str_date, '%Y-%m-%d')
+def to_string_date(input_date: date) -> str:
+    return input_date.strftime('%Y-%m-%d')
 
 
 def validate_currency(currency: str) -> Tuple[bool, str]:
@@ -28,22 +28,20 @@ def validate_currency(currency: str) -> Tuple[bool, str]:
     else:
         return False, "Invalid currency input or format"
 
-def validate_date(str_date: str) -> Tuple[bool, str]:
+def validate_date(input_date: date) -> Tuple[bool, str]:
     """
         Validates the input date string.
 
         1. Checks if the date is in the future.
-        2. Checks if the date format is YYYY-MM-DD.
+        2. Checks if the date is a valid date object.
 
         Returns:
             Tuple[bool, str]: A tuple containing a boolean indicating validity and a message.
     """
-    try:
-        input_date = format_date(str_date)
-    except ValueError:
-        return False, "Invalid date input or format"
+    if not isinstance(input_date, date):
+        return False, "Invalid date input"
 
-    today = datetime.now()
+    today = datetime.now().date()
     if input_date > today:
         return False, "Date cannot be in the future"
 
@@ -66,5 +64,6 @@ async def load_data():
         with z.open(csv_filename) as f:
             df = pd.read_csv(f, index_col=0)
             clean_df = clean_data(df)
+            clean_df.index = pd.to_datetime(clean_df.index)
 
     return clean_df

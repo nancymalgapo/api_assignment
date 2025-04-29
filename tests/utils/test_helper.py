@@ -1,36 +1,28 @@
-import pytest
 import pandas as pd
 
-from datetime import datetime, timedelta
-from utils.helper import format_date, validate_date, clean_data
+from datetime import datetime, timedelta, date
+from utils.helper import to_string_date, validate_date, clean_data
 
 
-def test_format_date():
-    date_str = "2023-01-01"
-    expected_date = datetime(2023, 1, 1)
-    assert format_date(date_str) == expected_date
-
-    date_str = "01-01-2023"
-    with pytest.raises(ValueError):
-        format_date(date_str)
+def test_to_string_date():
+    assert to_string_date(date(2023, 1, 1)) == '2023-01-01'
+    assert to_string_date(date(2025, 4, 22)) == '2025-04-22'
+    assert to_string_date(date(2000, 1, 1)) == '2000-01-01'
+    assert to_string_date(date(1999, 12, 31)) == '1999-12-31'
 
 
 def test_validate_date():
     # Test with today's date
-    today_date_str = datetime.now().strftime('%Y-%m-%d')  # Today's date
-    assert validate_date(today_date_str) == (True, "Success")
+    today_date = datetime.now().date()  # Today's date
+    assert validate_date(today_date) == (True, "Success")
 
-    # Test with a date not compliant to YYYY-MM-DD format
-    date_str = "01/01/2023"
-    assert validate_date(date_str) == (False, "Invalid date input or format")
+    # Test with an invalid date input (ex: a string)
+    invalid_date = "2023-01-01"
+    assert validate_date(invalid_date) == (False, "Invalid date input")
 
     # Test with a future date
-    future_date_str = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')  # Tomorrow's date
-    assert validate_date(future_date_str) == (False, "Date cannot be in the future")
-
-    # Test with an empty string
-    date_str = ""
-    assert validate_date(date_str) == (False, "Invalid date input or format")
+    future_date = (datetime.now() + timedelta(days=1)).date()  # Tomorrow's date
+    assert validate_date(future_date) == (False, "Date cannot be in the future")
 
 
 def test_clean_data():
